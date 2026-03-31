@@ -1,0 +1,51 @@
+[
+  {
+    "task_id": "easy_syntax_1",
+    "difficulty": "easy",
+    "diff_content": "--- a/greet.py\n+++ b/greet.py\n@@ -1,6 +1,10 @@\n def greet(name):\n-    print(f\"Hello, {name}\")\n+    if name == \"admin\"\n+        print(\"Welcome, admin!\")\n+    elif name == \"guest\"\n+        print(\"Hello, guest!\")\n+    else:\n+        print(f\"Hello, {name}\")\n \n def main():\n     greet(\"world\")",
+    "file_path": "greet.py",
+    "allowed_issue_types": [
+      "missing_colon",
+      "variable_not_defined",
+      "unused_import"
+    ],
+    "ground_truth": {
+      "2": "missing_colon",
+      "4": "missing_colon"
+    },
+    "correct_decision": "REQUEST_CHANGES"
+  },
+  {
+    "task_id": "medium_resource_1",
+    "difficulty": "medium",
+    "diff_content": "--- a/data_processor.py\n+++ b/data_processor.py\n@@ -1,8 +1,18 @@\n import os\n \n def process_data(data):\n     return data.strip().upper()\n \n+def log_data(filepath, data):\n+    f = open(filepath, 'w')\n+    f.write(data)\n+\n+def parse_record(record):\n+    parts = record.split(',')\n+    key = parts[0]\n+    value = parts[1]\n+    return {key: value}\n+\n def main():\n     process_data(\"  hello  \")",
+    "file_path": "data_processor.py",
+    "allowed_issue_types": [
+      "resource_leak",
+      "unhandled_exception",
+      "bare_except"
+    ],
+    "ground_truth": {
+      "7": "resource_leak",
+      "13": "unhandled_exception"
+    },
+    "correct_decision": "REQUEST_CHANGES"
+  },
+  {
+    "task_id": "hard_idor_1",
+    "difficulty": "hard",
+    "diff_content": "--- a/api/users.py\n+++ b/api/users.py\n@@ -1,14 +1,26 @@\n from fastapi import APIRouter, Depends, HTTPException\n from sqlalchemy.orm import Session\n from . import models, schemas\n from .database import get_db\n from .auth import get_current_user\n \n router = APIRouter()\n \n @router.get('/users/{user_id}/profile')\n def get_public_profile(user_id: int, db: Session = Depends(get_db)):\n     user = db.query(models.User).filter(models.User.id == user_id).first()\n     if not user:\n         raise HTTPException(status_code=404, detail='User not found')\n     return schemas.PublicProfile.from_orm(user)\n \n+@router.post('/users/{user_id}/email')\n+def update_email(\n+    user_id: int,\n+    new_email: str,\n+    db: Session = Depends(get_db),\n+    current_user: models.User = Depends(get_current_user)\n+):\n+    user = db.query(models.User).filter(models.User.id == user_id).first()\n+    if not user:\n+        raise HTTPException(status_code=404, detail='User not found')\n+    user.email = new_email\n+    db.commit()\n+    return {\"msg\": \"Email updated successfully\"}",
+    "file_path": "api/users.py",
+    "allowed_issue_types": [
+      "idor_vulnerability",
+      "sql_injection",
+      "missing_input_validation",
+      "xss"
+    ],
+    "ground_truth": {
+      "16": "idor_vulnerability",
+      "23": "missing_input_validation"
+    },
+    "correct_decision": "REQUEST_CHANGES"
+  }
+]
