@@ -1,0 +1,44 @@
+name: "OpenEnv-CR"
+version: "1.0.0"
+domain: "Software Engineering"
+description: "A fully deterministic code-review simulation environment where an AI agent reviews unified git diffs and is evaluated via a strict programmatic grading system."
+
+# HF Hub requires these OpenEnv top-level blocks:
+metadata:
+  tags:
+    - code-review
+    - agentic
+
+compute:
+  type: "docker"
+
+service:
+  port: 8000
+
+entry_point: "server.env:OpenEnvCREnv"
+env_class: "OpenEnvCREnv"
+
+action_space:
+  type: "structured"
+  schema:
+    issue_id: "string"
+    line_number: "integer"
+    comment: "string"
+    decision: "enum[APPROVE, REQUEST_CHANGES] | null"
+
+observation_space:
+  type: "structured"
+  schema:
+    diff_content: "string"
+    file_path: "string"
+    allowed_issue_types: "list[string]"
+    history: "list[string]"
+
+reward:
+  formula: "(0.7 / TotalIssues) * ValidHit - 0.2 * Hallucination + 0.3 * CorrectDecision"
+  range: [0.0, 1.0]
+
+constraints:
+  max_steps: 5
+  deterministic: true
+  seed_required: true
